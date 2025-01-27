@@ -1,35 +1,84 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import { nanoid } from "nanoid";
+import ReactConfetti from "react-confetti";
+import "./App.css";
+import Die from "./components/Die";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [dice, setDice] = useState(() => generateAllnewNumbers());
+  var gameWon = false;
+  if (
+    dice.every((die) => die.isHeld) &&
+    dice.every((die) => die.value === dice[0].value)
+  ) {
+    gameWon = true;
+    console.log("Game won!");
+  }
 
+  function getRandom() {
+    return Math.floor(Math.random() * 6) + 1;
+  }
+
+  function generateAllnewNumbers() {
+    var res = [];
+    for (var i = 0; i < 10; i++) {
+      var random = getRandom();
+      res.push({ value: random, isHeld: false, id: nanoid() });
+    }
+    return res;
+  }
+
+  function hold(id) {
+    setDice(
+      dice.map((die) => {
+        if (die.id === id) {
+          return { ...die, isHeld: !die.isHeld };
+        } else return die;
+      })
+    );
+  }
+
+  function roll() {
+    if (gameWon) {
+      setDice(generateAllnewNumbers());
+      gameWon = false;
+    } else {
+      setDice(
+        dice.map((die) => {
+          if (!die.isHeld) {
+            return { ...die, value: getRandom() };
+          } else return die;
+        })
+      );
+    }
+  }
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
+      {gameWon && <ReactConfetti />}
+      <main className="mainContainer">
+        <h1 className="title">Tenzies</h1>
+        <p className="instructions">
+          Roll until all dice are the same. Click each die to freeze it at its
+          current value between rolls.
         </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+
+        <div className="diceContainer">
+          {dice.map((die) => (
+            <Die
+              value={die.value}
+              key={die.id}
+              id={die.id}
+              isHeld={die.isHeld}
+              hold={hold}
+            />
+          ))}
+        </div>
+        <button className="rollButton" onClick={roll}>
+          {gameWon ? "New Game" : "Roll"}
+        </button>
+      </main>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
